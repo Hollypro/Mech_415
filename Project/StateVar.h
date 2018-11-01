@@ -52,6 +52,10 @@ public:
 		L = 1;
 	}
 
+	void Get_StatV(int index){
+		return StatV[index];
+	}
+
 	void Set_StatV(double value, int index){
 		StatV[index] = value;
 	}
