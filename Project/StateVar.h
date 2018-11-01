@@ -56,6 +56,15 @@ public:
 		StatV[index] = value;
 	}
 
+	void Set_Param(double iM, double ic1, double ic2, double ic3, double iJ, double iL){
+		M = iM;
+		c1 = ic1;
+		c2 = ic2;
+		c3 = ic3;
+		J = iJ;
+		L = iL;
+	}
+
 	void Derivative(double Fl, double Fr){
 		DStatV[0] = StatV[1];
 		DStatV[1] = (Fl + Fr - c1*StatV[1] + StatV[3] * StatV[5]) / M;
