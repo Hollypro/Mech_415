@@ -87,7 +87,7 @@ Hovercraft::Hovercraft(double y[8], char *file_name) {
 
 	c1 = 0.5; //Drag coefficients 0.5
 	c2 = 0.5;
-	c3 = 0.001; // So it doesn't spin forever.
+	c3 = 0.000001; // So it doesn't spin forever.
 	J = 1; // inertia 1
 	L = 1; // 1 m between motors
 	Mass = 1; // mass 1
@@ -155,6 +155,9 @@ void Hovercraft::input(){
 		if (KEY(VK_RIGHT)){
 			U[1] = 1.0;
 		}
+		else if (KEY(0x0058)){ // Press X to have the motor work in reverse
+			U[1] = -1.0;
+		}
 		else{
 			U[1] = 0.0;
 		} 
@@ -165,6 +168,9 @@ void Hovercraft::input(){
 		// Fl goes to 1
 		if (KEY(VK_LEFT)){
 			U[0] = 1.0;
+		}
+		else if (KEY(0x005A)){ // Press Z to have the motor work in reverse
+			U[0] = -1.0;
 		}
 		else{
 			U[0] = 0.0;
@@ -181,7 +187,7 @@ void Hovercraft::eulers(){
 	Xd[0] = X[1]; 
 	// dxb/dt = u
 	
-	Xd[1] = (U[1] + U[2] - c1*X[1]) / Mass + X[3] * X[5];
+	Xd[1] = (U[0] + U[1] - c1*X[1]) / Mass + X[3] * X[5];
 	// du/dt=(Fl+Fr - c1U)/M + v*r
 	
 	Xd[2] = X[3];
@@ -193,7 +199,7 @@ void Hovercraft::eulers(){
 	Xd[4] = X[5];
 	// dyaw/dt = r;
 	
-	Xd[5] = (0.5*L*(U[2] - U[1]) - c3*X[3]) / J;
+	Xd[5] = (0.5*L*(U[1] - U[0]) - c3*X[3]) / J;
 	// rd = (0.5*L*(Fr-Fl)-c3*r)/J
 	
 	Xd[6] = cos(X[4])*X[1] - sin(X[4])*X[3];
