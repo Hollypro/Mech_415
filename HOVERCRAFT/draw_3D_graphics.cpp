@@ -16,8 +16,8 @@
 // 3D graphics window size in pixels
 int WIDTH_MIN = 0;
 int HEIGHT_MIN = 0;
-int WIDTH_MAX = 800;
-int HEIGHT_MAX = 600;
+int WIDTH_MAX = 1920;
+int HEIGHT_MAX = 1080;
 
 // background colour for the scene
 float BACK_R = 0.0f; // red colour component (0 to 1)
@@ -60,7 +60,7 @@ public:
 	
 	
 
-	double U[2 + 1]; // 2 inputs aka Fr and Fl
+	double U[2]; // 2 inputs aka Fr and Fl
 	
 
 	mesh *p_mesh;
@@ -87,9 +87,9 @@ Hovercraft::Hovercraft(double y[8], char *file_name) {
 
 	c1 = 0.5; //Drag coefficients 0.5
 	c2 = 0.5;
-	c3 = 0.5;
+	c3 = 0.001; // So it doesn't spin forever.
 	J = 1; // inertia 1
-	L = 0.3; // 30cm between motors
+	L = 1; // 1 m between motors
 	Mass = 1; // mass 1
 
 	for (int i = 0; i < 8; i++){
@@ -106,7 +106,7 @@ Hovercraft::Hovercraft(double y[8], char *file_name) {
 }
 
 Hovercraft::~Hovercraft(){
-	pmesh = nullptr;
+	p_mesh = nullptr;
 	delete p_mesh;
 }
 
@@ -116,10 +116,10 @@ Hovercraft::~Hovercraft(){
 
 void Hovercraft::draw(){ //draw the hover craft
 
-	p_mesh->Scale = 0.7;
+	p_mesh->Scale = 0.3;
 
 	// void draw(double Tx, double Ty, double Tz, double yaw, double pitch, double roll);
-	p_mesh->draw(X[0], X[2], 0.0, X[4] + PI,0.0,PI/2);
+	p_mesh->draw(X[6], X[7], 0.0, X[4] + PI,0.0,PI/2);
 	// Hovercraft has fixed height so: Tz=0 always.
 	// Pitch and Roll are constants for our application.
 	// roll is pi/2 because initial hovercraft wasn't well positioned
@@ -139,26 +139,35 @@ void Hovercraft::input(){
 	
 
 		
-		if (KEY(VK_UP)) {
+		/*if (KEY(VK_UP)) {
 			
-		}
+		}*/
+		//Commented this out because not used.
 
 		//click down arrow key to reset position *** Change it if you can 
 		if (KEY(VK_DOWN)) {
-			for (int i = 1; i <= 6; i++) X[i] = { 0.0 };
+			for (int i = 0; i < 8; i++) {
+				X[i] = { 0.0 };
+			}
 		}
 
 		// Fr goes to 1 so eulers function works
-		if (KEY(VK_RIGHT))U[2] = 1.0; else{
-			U[2] = 0.0;
+		if (KEY(VK_RIGHT)){
+			U[1] = 1.0;
+		}
+		else{
+			U[1] = 0.0;
 		} 
 			
 			
 		
 
 		// Fl goes to 1
-		if (KEY(VK_LEFT)) U[1] = 1.0; else{
-			U[1] = 0.0;
+		if (KEY(VK_LEFT)){
+			U[0] = 1.0;
+		}
+		else{
+			U[0] = 0.0;
 		}
 		
 
@@ -172,13 +181,13 @@ void Hovercraft::eulers(){
 	Xd[0] = X[1]; 
 	// dxb/dt = u
 	
-	Xd[1] = (U[1] + U[2] - c1*X[1]) / M + X[3] * X[5]);
+	Xd[1] = (U[1] + U[2] - c1*X[1]) / Mass + X[3] * X[5];
 	// du/dt=(Fl+Fr - c1U)/M + v*r
 	
 	Xd[2] = X[3];
 	// dyb/dt = v
 	
-	Xd[3] = (-c2 * X[3]) / M - X[1] * X[5];
+	Xd[3] = (-c2 * X[3]) / Mass - X[1] * X[5];
 	// dv/dt =-c2*v/M - u*r
 	
 	Xd[4] = X[5];
