@@ -55,8 +55,8 @@ class Hovercraft {
 public:
 
 	
-	double c1, c2, c3, J, Mass;
-	// initialize constants AKA drag coefficients, Inertia and Mass of Hovercraft
+	double c1, c2, c3, J, Mass, L;
+	// initialize constants AKA drag coefficients, Inertia and Mass of Hovercraft, and Length between motors.
 	
 	
 
@@ -82,17 +82,19 @@ public:
 };
 
 
-Hovercraft::Hovercraft(double *y, char *file_name) {
+Hovercraft::Hovercraft(double y[8], char *file_name) {
+	//Specified array size 8 because it should never be anything else.
 
 	c1 = 0.5; //Drag coefficients 0.5
 	c2 = 0.5;
 	c3 = 0.5;
 	J = 1; // inertia 1
+	L = 0.3; // 30cm between motors
 	Mass = 1; // mass 1
 
 	for (int i = 0; i < 8; i++){
-		// initialize variables to y
-		X[i] = y;
+		// initialize variables to y[i]
+		X[i] = y[i];
 	}
 
 	for (int i = 1; i <= 2; i++){
@@ -116,15 +118,18 @@ void Hovercraft::draw(){ //draw the hover craft
 
 	p_mesh->Scale = 0.7;
 
-	p_mesh->draw(X[4],X[5],0.0,X[6] + PI,0.0,PI/2); // roll is pi/2 because initial hovercraft wasn't well positioned
-
+	// void draw(double Tx, double Ty, double Tz, double yaw, double pitch, double roll);
+	p_mesh->draw(X[0], X[2], 0.0, X[4] + PI,0.0,PI/2);
+	// Hovercraft has fixed height so: Tz=0 always.
+	// Pitch and Roll are constants for our application.
+	// roll is pi/2 because initial hovercraft wasn't well positioned
 }
 
 
 void Hovercraft::sim_step(double dt){
 	
 	//sim step for eulers
-	for (int i = 1; i <= 6; i++){
+	for (int i = 0; i < 8; i++){
 		X[i] = X[i] + Xd[i] * dt;
 	}
 }
@@ -161,23 +166,42 @@ void Hovercraft::input(){
 }
 
 void Hovercraft::eulers(){
-
-	Xd[1] = (U[1] + U[2] - c*X[1]) / Mass + X[2] * X[3];//ud=(Fl+Fr - cU)/M + v*r
-	Xd[2] = -c*X[2] / Mass - X[1] * X[3];//vd=-c*v/M - u*r
-	Xd[3] = (0.5*(U[2] - U[1]) - c*X[3]) / J;//[rd = 0.5(Fr-Fl)-c*r]/J
-	Xd[4] = cos(X[6])*X[1] - sin(X[6])*X[2];//xcd = cos(yaw)*u-sin(yaw)*v
-	Xd[5] = sin(X[6])*X[1] - cos(X[6])*X[2];//yd = sin(yaw)*u - cos(yaw)*v
-	Xd[6] = X[3];//yawd=r
-
+	// All of the following equations are either from the hovercraft.pdf
+	// or based on the declaration of Xd and X.
+	
+	Xd[0] = X[1]; 
+	// dxb/dt = u
+	
+	Xd[1] = (U[1] + U[2] - c1*X[1]) / M + X[3] * X[5]);
+	// du/dt=(Fl+Fr - c1U)/M + v*r
+	
+	Xd[2] = X[3];
+	// dyb/dt = v
+	
+	Xd[3] = (-c2 * X[3]) / M - X[1] * X[5];
+	// dv/dt =-c2*v/M - u*r
+	
+	Xd[4] = X[5];
+	// dyaw/dt = r;
+	
+	Xd[5] = (0.5*L*(U[2] - U[1]) - c3*X[3]) / J;
+	// rd = (0.5*L*(Fr-Fl)-c3*r)/J
+	
+	Xd[6] = cos(X[4])*X[1] - sin(X[4])*X[3];
+	// dxc/dt = cos(yaw)*u-sin(yaw)*v
+	
+	Xd[7] = sin(X[4])*X[1] + cos(X[4])*X[3];
+	// dyc/dt = sin(yaw)*u + cos(yaw)*v
 }
 
 void draw_3D_graphics(){
 
-	static double x[6 + 1] = { 0.0 };
-	static double xd[6 + 1] = { 0.0 };
-	static char file_name[] = "hoverbus.x";
+	static double X[8] = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
+	//static double Xd[8] = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
+	// I commented this out because it's not used.
+	static char file_name[11] = "hoverbus.x";
 
-	static Hovercraft H1(x, file_name);
+	static Hovercraft H1(X, file_name);
 
 	set_view();
 	draw_XYZ(5.0);
