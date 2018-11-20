@@ -35,13 +35,28 @@ ofstream fout("debug.txt");
 
 class Hovercraft {
 
+	double X[8];
+	//index# : 0  1 2  3 4   5 6  7
+	//StateV : xb u yb v yaw r xc yc
+	
+	//Xb and yb are measured with respect to the hovercraft
+	//u and v are their derivatives respectively
+	//yaw is measured with respect to the yc axis in radians.
+	//r is the derivative of yaw.
+	//xc and yc are universal x and y.
 
-	double X[6 + 1]; // Initialize all variables
-	double Xd[6 + 1]; // Initialize all derivatives
+
+	double Xd[8];
+	
+	//Holds the derivative of StatV
+	//index# : 0 1  2 3  4 5  6  7
+	//StateV : u au v av r ar vx vy
 
 public:
 
-	double c, J, Mass; // initialize constants AKA drag coefficients, Inertia and Mass of Hovercraft
+	
+	double c1, c2, c3, J, Mass;
+	// initialize constants AKA drag coefficients, Inertia and Mass of Hovercraft
 	
 	
 
@@ -67,33 +82,29 @@ public:
 };
 
 
-Hovercraft::Hovercraft(double *X, char *file_name) {
+Hovercraft::Hovercraft(double *y, char *file_name) {
 
-	c = 0.5; //Drag coefficients -.6
+	c1 = 0.5; //Drag coefficients 0.5
+	c2 = 0.5;
+	c3 = 0.5;
 	J = 1; // inertia 1
 	Mass = 1; // mass 1
 
-	for (int i = 1; i <= 6; i++){ // initialize variables to 0
-
-	this->X[i] = X[i];
-	
-		
+	for (int i = 0; i < 8; i++){
+		// initialize variables to y
+		X[i] = y;
 	}
 
-	for (int i = 1; i <= 2; i++){//itialize inputs to 0
+	for (int i = 1; i <= 2; i++){
+		//itialize inputs to 0
 		U[i] = 0;
-
 	}
 
 	p_mesh = new mesh(file_name);
-
-
-
-
-
 }
 
 Hovercraft::~Hovercraft(){
+	pmesh = nullptr;
 	delete p_mesh;
 }
 
@@ -110,13 +121,12 @@ void Hovercraft::draw(){ //draw the hover craft
 }
 
 
-void Hovercraft::sim_step(double dt){ //sim step for eulers
-
-	for (int i = 1; i <= 6; i++) X[i] = X[i] + Xd[i] * dt;
-
-
-
-
+void Hovercraft::sim_step(double dt){
+	
+	//sim step for eulers
+	for (int i = 1; i <= 6; i++){
+		X[i] = X[i] + Xd[i] * dt;
+	}
 }
 
 void Hovercraft::input(){
