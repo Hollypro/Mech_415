@@ -1,5 +1,5 @@
-﻿Build started 11/15/2018 8:34:34 PM.
-     1>Project "C:\Users\Marc\Desktop\HOVERCRAFT\Vertices.vcxproj" on node 2 (Build target(s)).
+﻿Build started 2018-12-01 2:01:03 AM.
+     1>Project "C:\Users\hugo1\Desktop\HOVERCRAFT\Vertices.vcxproj" on node 2 (Build target(s)).
      1>ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /I..\..\..\common /ZI /nologo /W3 /WX- /Od /Oy- /D WIN32 /D _DEBUG /D _WINDOWS /D _MBCS /Gm /EHsc /MTd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc120.pdb" /Gd /TP /analyze- /errorReport:prompt draw_3D_graphics.cpp
          draw_3D_graphics.cpp
@@ -8,9 +8,9 @@
          Debug\rotation.obj
          Debug\timer.obj
          Vertices.lib
-         Vertices.vcxproj -> C:\Users\Marc\Desktop\HOVERCRAFT\Debug\Vertices.exe
-     1>Done Building Project "C:\Users\Marc\Desktop\HOVERCRAFT\Vertices.vcxproj" (Build target(s)).
+         Vertices.vcxproj -> C:\Users\hugo1\Desktop\HOVERCRAFT\Debug\Vertices.exe
+     1>Done Building Project "C:\Users\hugo1\Desktop\HOVERCRAFT\Vertices.vcxproj" (Build target(s)).
 
 Build succeeded.
 
-Time Elapsed 00:00:00.75
+Time Elapsed 00:00:02.44
