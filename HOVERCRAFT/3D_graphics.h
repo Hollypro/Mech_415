@@ -1,4 +1,3 @@
-
 // A mesh object can draw a 3D rigid body object stored in an x-file.
 // you can translate and rotate this rigid body.
 // this type of graphics is useful for anamimating machines
