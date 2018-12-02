@@ -6,8 +6,8 @@
 #include <fstream>   
 #include <strstream> 
 #include <iomanip> 
-
-#include <windows.h>
+#include <Windows.h>
+#include <chrono>
 
 #include "timer.h" 
 #include "rotation.h"
@@ -58,12 +58,14 @@ public:
 	double c1, c2, c3, J, Mass, L;
 	// initialize constants AKA drag coefficients, Inertia and Mass of Hovercraft, and Length between motors.
 	
-	
+	bool View = true;
 
 	double U[2]; // 2 inputs aka Fr and Fl
 	
+	//auto TimeThen;
 
 	mesh *p_mesh;
+	mesh *p_env;
 
 	Hovercraft(double *X, char *file_name);//constructor
 
@@ -85,12 +87,14 @@ public:
 Hovercraft::Hovercraft(double y[8], char *file_name) {
 	//Specified array size 8 because it should never be anything else.
 
-	c1 = 0.5; //Drag coefficients 0.5
-	c2 = 0.5;
-	c3 = 0.0000000000000001; // So it doesn't spin forever.
-	J = 1; // inertia 1
+	c1 = 0.05; //Drag coefficients 0.5
+	c2 = 0.05;
+	c3 = 0.05; // So it doesn't spin forever.
+	J = 0.1; // inertia 1
 	L = 1; // 1 m between motors
-	Mass = 1; // mass 1
+	Mass = 0.1; // mass 1
+
+	//auto TimeThen = chrono::high_resolution_clock::now();
 
 	for (int i = 0; i < 8; i++){
 		// initialize variables to y[i]
@@ -103,6 +107,7 @@ Hovercraft::Hovercraft(double y[8], char *file_name) {
 	}
 
 	p_mesh = new mesh(file_name);
+	p_env = new mesh("track2.x");
 }
 
 Hovercraft::~Hovercraft(){
@@ -116,6 +121,9 @@ Hovercraft::~Hovercraft(){
 void Hovercraft::draw(){ //draw the hover craft
 
 	p_mesh->Scale = 0.3;
+	p_env->Scale = 0.05;
+	p_env->draw(0.0, 0.0, 2.0, 0.0, 0.0, 0.0);
+
 
 	// void draw(double Tx, double Ty, double Tz, double yaw, double pitch, double roll);
 	p_mesh->draw(X[6], X[7], 0.0, X[4] + PI,0.0,PI/2);
@@ -139,30 +147,48 @@ double Hovercraft::get_xy(int index){
 
 void Hovercraft::input(){
 	{
-	
+		//auto Then = std::chrono::duration<double>(TimeThen.time_since_epoch());
+		//auto TimeNow = chrono::high_resolution_clock::now();					
+		//auto Now = std::chrono::duration<double>(TimeNow.time_since_epoch());	
 
-		
-		if (KEY(VK_UP)) {
+		/*This whole section is to ensure enough time has passed since switching between third person
+		view and fps, to prevent me from puking while debugging.*/
+
+		/*It turns out that VS 2013 is known for being unable to deal with time.
+		https://stackoverflow.com/questions/17769172/non-conforming-return-value-for-stdchronodurationoperator-in-microsoft
+		https://stackoverflow.com/questions/24586804/c11-chrono-in-visual-studio-2013
+		*/
+
+
+		//double TimeSince = Now.count() - Then.count();			
+
+		if (KEY(VK_UP) /*&& TimeSince < 0.5*/ ){
+			View = !View;
+			//auto TimeThen = chrono::high_resolution_clock::now();
+		}
+
+		if (View){}
+		else{
 			// void set_view(double *eye_point, double *lookat_point, double *up_dir, double fov=3.14159/4);
 			
 			double eye_point[4], lookat_point[4], up_dir[4]; // 3+1 because the prof's library starts at index 1.
 
 
-			eye_point[1] = 0.0 + get_xy(6);  // x
-			eye_point[2] = 0.0 + get_xy(7); // y
-			eye_point[3] = 0.0; // z
+			eye_point[1] = 0.0 + 1 * get_xy(6);  // x
+			eye_point[2] = 0.0 + 1 * get_xy(7); // y
+			eye_point[3] = -0.3; // z
 
 
 
 			// the position you are looking at in global coord
-			lookat_point[1] = 0.0 + get_xy(6) + 2 * cos(get_xy(4)); // x
-			lookat_point[2] = 0.0 + get_xy(7) + 2 * sin(get_xy(4)); // y
-			lookat_point[3] = 1.0; // z
+			lookat_point[1] = 0.0 + 1 * get_xy(6) + 2 * cos(get_xy(4)); // x
+			lookat_point[2] = 0.0 + 1 * get_xy(7) + 2 * sin(get_xy(4)); // y
+			lookat_point[3] = -1.0; // z
 
 			// the direction of the top of your head (note: up is a direction, not a point)
-			up_dir[1] = cos(get_xy(4)); // dx
-			up_dir[2] = sin(get_xy(4)); // dy 
-			up_dir[3] = 0.0;;//dz
+			up_dir[1] = 0.0;//sin(get_xy(4)); // dx
+			up_dir[2] = 0.0;//cos(get_xy(4)); // dy 
+			up_dir[3] = 1.0;;//dz
 
 			set_view(eye_point, lookat_point, up_dir); // fpv when up is pressed.
 		}
@@ -239,14 +265,15 @@ void draw_3D_graphics(){
 	// I commented this out because it's not used.
 	static char file_name[11] = "hoverbus.x";
 
+
 	static Hovercraft H1(X, file_name);
 
 	//set_view();
 
 	double eye_point[4], lookat_point[4], up_dir[4]; // 3+1 because the prof's library starts at index 1.
-	eye_point[1] = 0.0 + H1.get_xy(6);  // x
+	eye_point[1] = -3.0 + H1.get_xy(6);  // x
 	eye_point[2] = 0.0 + H1.get_xy(7); // y
-	eye_point[3] = 5.0; // z
+	eye_point[3] = 1.0; // z
 
 
 
