@@ -52,6 +52,8 @@ class Hovercraft {
 	//index# : 0 1  2 3  4 5  6  7
 	//StateV : u au v av r ar vx vy
 
+	bool Prev_Key;
+
 public:
 
 	
@@ -93,6 +95,8 @@ Hovercraft::Hovercraft(double y[8], char *file_name) {
 	J = 0.1; // inertia 1
 	L = 1; // 1 m between motors
 	Mass = 0.1; // mass 1
+
+	Prev_Key = false;
 
 	//auto TimeThen = chrono::high_resolution_clock::now();
 
@@ -162,9 +166,13 @@ void Hovercraft::input(){
 
 		//double TimeSince = Now.count() - Then.count();			
 
-		if (KEY(VK_UP) /*&& TimeSince < 0.5*/ ){
+		if (KEY(VK_UP) && !(Prev_Key) ){
 			View = !View;
+			Prev_Key = true;
 			//auto TimeThen = chrono::high_resolution_clock::now();
+		}
+		else if (!(KEY(VK_UP))){ //So that holding the up key won't flash between the two views.
+			Prev_Key = false;
 		}
 
 		if (View){}
