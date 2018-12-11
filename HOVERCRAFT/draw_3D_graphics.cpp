@@ -8,6 +8,7 @@
 #include <iomanip> 
 #include <Windows.h>
 #include <chrono>
+#include <ctime>
 
 #include "timer.h" 
 #include "rotation.h"
@@ -54,6 +55,20 @@ class Hovercraft {
 
 	bool Prev_Key;
 
+	double BStat_Var[6];
+	//Bullet State variables
+	// index 0 1 2 3     4   5
+	// Var:  x y z pitch yaw roll
+
+	double BDStatV[6];
+	//Bullet State variables derivatives
+	// index 0  1  2  3      4    5
+	// Var:  vx vy vz dpitch dyaw droll
+
+	int Velocity;
+
+	double Tar_Pos[2];
+
 public:
 
 	
@@ -68,6 +83,8 @@ public:
 
 	mesh *p_mesh;
 	mesh *p_env;
+	mesh *p_bull;
+	mesh *p_tar;
 
 	Hovercraft(double *X, char *file_name);//constructor
 
@@ -82,6 +99,8 @@ public:
 	void input();// change the inputs to Fl or Fr to 1 or 0;
 
 	double get_xy(int index);
+
+	double get_Bullxy(int index);
 
 };
 
@@ -110,12 +129,41 @@ Hovercraft::Hovercraft(double y[8], char *file_name) {
 		U[i] = 0;
 	}
 
+	BStat_Var[0] = X[6];
+	BStat_Var[1] = X[7];
+	BStat_Var[2] = 0;
+	BStat_Var[3] = X[3];
+	BStat_Var[4] = 0;
+	BStat_Var[5] = 0;
+	BDStatV[0] = cos(BStat_Var[4]) * Velocity;
+	BDStatV[1] = sin(BStat_Var[4]) * Velocity;
+
+	Velocity = 10;
+
+	BDStatV[0] = cos(BStat_Var[4])*Velocity;
+	BDStatV[1] = sin(BStat_Var[4]) * Velocity;
+	BDStatV[2] = 0;
+	BDStatV[3] = 0;
+	BDStatV[4] = 0;
+	BDStatV[5] = 0;
+
+	srand(time(NULL)); //Randomly place the target within the map.
+	Tar_Pos[0] = rand() % 70 - 35;
+	srand(time(NULL));
+	Tar_Pos[1] = rand() % 30 - 15;
+
 	p_mesh = new mesh(file_name);
 	p_env = new mesh("track2.x");
+	p_bull = new mesh("Bullet.x");
+	p_tar = new mesh("Target.x");
 }
 
 Hovercraft::~Hovercraft(){
 	p_mesh = nullptr;
+	p_env = nullptr;
+	p_bull = nullptr;
+	delete p_bull;
+	delete p_env;
 	delete p_mesh;
 }
 
@@ -126,11 +174,32 @@ void Hovercraft::draw(){ //draw the hover craft
 
 	p_mesh->Scale = 0.3;
 	p_env->Scale = 0.05;
-	p_env->draw(0.0, 0.0, 2.0, 0.0, 0.0, 0.0);
+	p_bull->Scale = 0.005;
+	p_tar->Scale = 0.25;
+	p_env->draw(0.0, 0.0, 1.5, 0.0, 0.0, 0.0);
 
+	double dist = sqrt((BStat_Var[0] - Tar_Pos[0]) * (BStat_Var[0] - Tar_Pos[0]) + (BStat_Var[1] - Tar_Pos[1])*  (BStat_Var[1] - Tar_Pos[1]));
+
+	if (dist < 0.5){
+		srand(time(NULL));
+		Tar_Pos[0] = rand() % 80 - 40;
+		srand(time(NULL));
+		Tar_Pos[1] = rand() % 30 - 15;
+	}
 
 	// void draw(double Tx, double Ty, double Tz, double yaw, double pitch, double roll);
-	p_mesh->draw(X[6], X[7], 0.0, X[4] + PI,0.0,PI/2);
+	p_mesh->draw(X[6], X[7], 0.0, X[4] + PI, 0.0, PI / 2);
+	if (View){
+		p_bull->draw(BStat_Var[0], BStat_Var[1], 0.0, BStat_Var[4] + PI / 2, 0.0, PI);
+		// void draw(double Tx, double Ty, double Tz, double yaw, double pitch, double roll);
+		//max				40			15
+		//min				-40			-20
+		p_tar->draw(Tar_Pos[0], Tar_Pos[1], 0.0, 0.0, 0.0, 0.0);
+	}
+	else{
+		p_bull->draw(BStat_Var[0], BStat_Var[1], -0.5, BStat_Var[4] + PI / 2, 0.0, PI);
+		p_tar->draw(Tar_Pos[0], Tar_Pos[1], -0.5, 0.0, 0.0, 0.0);
+	}
 	// Hovercraft has fixed height so: Tz=0 always.
 	// Pitch and Roll are constants for our application.
 	// roll is pi/2 because initial hovercraft wasn't well positioned
@@ -143,10 +212,17 @@ void Hovercraft::sim_step(double dt){
 	for (int i = 0; i < 8; i++){
 		X[i] = X[i] + Xd[i] * dt;
 	}
+	for (int i = 0; i < 6; i++){
+		BStat_Var[i] += BDStatV[i] * dt;
+	}
 }
 
 double Hovercraft::get_xy(int index){
 	return X[index];
+}
+
+double Hovercraft::get_Bullxy(int index){
+	return BStat_Var[index];
 }
 
 void Hovercraft::input(){
@@ -233,7 +309,25 @@ void Hovercraft::input(){
 			U[1] = 0.0;
 		}
 		
+		if (KEY(VK_SPACE)){
 
+			Velocity = 10 + sqrt(X[1] * X[1] + X[3] * X[3]);
+			//Hovercraft State Variable
+			//index# : 0  1 2  3 4   5 6  7
+			//StateV : xb u yb v yaw r xc yc
+
+			//Bullet State variables
+			// index 0 1 2 3     4   5
+			// Var:  x y z pitch yaw roll
+			BStat_Var[0] = X[6];
+			BStat_Var[1] = X[7];
+			BStat_Var[2] = 0;
+			BStat_Var[3] = X[3];
+			BStat_Var[4] = X[4];
+			BStat_Var[5] = 0;
+			BDStatV[0] = cos(BStat_Var[4]) * Velocity;
+			BDStatV[1] = sin(BStat_Var[4]) * Velocity;
+		}
 	}
 }
 
