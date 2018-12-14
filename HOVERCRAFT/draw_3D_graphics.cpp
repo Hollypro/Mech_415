@@ -69,6 +69,16 @@ class Hovercraft {
 
 	double Tar_Pos[2];
 
+	double Fol_Stat_V[3];
+	//index# : 0 1 2
+	//StateV : x y yaw
+
+	double Fol_DStatV[3];
+	//index# : 0 1 2
+	//StateV : u v r
+
+	double Fol_Velocity;
+
 public:
 
 	
@@ -85,6 +95,7 @@ public:
 	mesh *p_env;
 	mesh *p_bull;
 	mesh *p_tar;
+	mesh *p_fol;
 
 	Hovercraft(double *X, char *file_name);//constructor
 
@@ -147,6 +158,14 @@ Hovercraft::Hovercraft(double y[8], char *file_name) {
 	BDStatV[4] = 0;
 	BDStatV[5] = 0;
 
+	Fol_Stat_V[0] = 0.0;
+	Fol_Stat_V[1] = 0.0;
+	Fol_Stat_V[2] = 0.0;
+
+	Fol_DStatV[0] = 0.0;
+	Fol_DStatV[1] = 0.0;
+	Fol_DStatV[2] = 0.0;
+
 	srand(time(NULL)); //Randomly place the target within the map.
 	Tar_Pos[0] = rand() % 70 - 35;
 	srand(time(NULL));
@@ -156,12 +175,17 @@ Hovercraft::Hovercraft(double y[8], char *file_name) {
 	p_env = new mesh("track2.x");
 	p_bull = new mesh("Bullet.x");
 	p_tar = new mesh("Target.x");
+	p_fol = new mesh(file_name);
 }
 
 Hovercraft::~Hovercraft(){
 	p_mesh = nullptr;
 	p_env = nullptr;
 	p_bull = nullptr;
+	p_tar = nullptr;
+	p_fol = nullptr;
+	delete p_tar;
+	delete p_fol;
 	delete p_bull;
 	delete p_env;
 	delete p_mesh;
@@ -176,19 +200,12 @@ void Hovercraft::draw(){ //draw the hover craft
 	p_env->Scale = 0.05;
 	p_bull->Scale = 0.005;
 	p_tar->Scale = 0.25;
+	p_fol->Scale = 0.3 * 0.9;
 	p_env->draw(0.0, 0.0, 1.5, 0.0, 0.0, 0.0);
-
-	double dist = sqrt((BStat_Var[0] - Tar_Pos[0]) * (BStat_Var[0] - Tar_Pos[0]) + (BStat_Var[1] - Tar_Pos[1])*  (BStat_Var[1] - Tar_Pos[1]));
-
-	if (dist < 0.5){
-		srand(time(NULL));
-		Tar_Pos[0] = rand() % 80 - 40;
-		srand(time(NULL));
-		Tar_Pos[1] = rand() % 30 - 15;
-	}
 
 	// void draw(double Tx, double Ty, double Tz, double yaw, double pitch, double roll);
 	p_mesh->draw(X[6], X[7], 0.0, X[4] + PI, 0.0, PI / 2);
+	p_fol->draw(Fol_Stat_V[0], Fol_Stat_V[1], -0.5, Fol_Stat_V[2] + PI, 0.0, PI / 2);
 	if (View){
 		p_bull->draw(BStat_Var[0], BStat_Var[1], 0.0, BStat_Var[4] + PI / 2, 0.0, PI);
 		// void draw(double Tx, double Ty, double Tz, double yaw, double pitch, double roll);
@@ -214,6 +231,9 @@ void Hovercraft::sim_step(double dt){
 	}
 	for (int i = 0; i < 6; i++){
 		BStat_Var[i] += BDStatV[i] * dt;
+	}
+	for (int i = 0; i < 3; i++){
+		Fol_Stat_V[i] += Fol_DStatV[i] * dt;
 	}
 }
 
@@ -242,7 +262,7 @@ void Hovercraft::input(){
 
 		//double TimeSince = Now.count() - Then.count();			
 
-		if (KEY(VK_UP) && !(Prev_Key) ){
+		if (KEY(VK_UP) && !(Prev_Key)){
 			View = !View;
 			Prev_Key = true;
 			//auto TimeThen = chrono::high_resolution_clock::now();
@@ -254,7 +274,7 @@ void Hovercraft::input(){
 		if (View){}
 		else{
 			// void set_view(double *eye_point, double *lookat_point, double *up_dir, double fov=3.14159/4);
-			
+
 			double eye_point[4], lookat_point[4], up_dir[4]; // 3+1 because the prof's library starts at index 1.
 
 
@@ -282,6 +302,9 @@ void Hovercraft::input(){
 			for (int i = 0; i < 8; i++) {
 				X[i] = { 0.0 };
 			}
+			for (int i = 0; i < 3; i++) {
+				Fol_Stat_V[i] = { 0.0 };
+			}
 		}
 
 		// Fr goes to 1 so eulers function works
@@ -293,10 +316,10 @@ void Hovercraft::input(){
 		}
 		else{
 			U[0] = 0.0;
-		} 
-			
-			
-		
+		}
+
+
+
 
 		// Fl goes to 1
 		if (KEY(VK_LEFT)){
@@ -308,7 +331,7 @@ void Hovercraft::input(){
 		else{
 			U[1] = 0.0;
 		}
-		
+
 		if (KEY(VK_SPACE)){
 
 			Velocity = 10 + sqrt(X[1] * X[1] + X[3] * X[3]);
@@ -328,8 +351,40 @@ void Hovercraft::input(){
 			BDStatV[0] = cos(BStat_Var[4]) * Velocity;
 			BDStatV[1] = sin(BStat_Var[4]) * Velocity;
 		}
+
+
+		double dist = sqrt((BStat_Var[0] - Tar_Pos[0]) * (BStat_Var[0] - Tar_Pos[0]) + (BStat_Var[1] - Tar_Pos[1])*  (BStat_Var[1] - Tar_Pos[1]));
+
+		if (dist < 0.5){
+			srand(time(NULL));
+			Tar_Pos[0] = rand() % 80 - 40;
+			srand(time(NULL));
+			Tar_Pos[1] = rand() % 30 - 15;
+		}
+
+		Fol_Velocity = sqrt((Fol_Stat_V[0] - X[6]) * (Fol_Stat_V[0] - X[6]) + (Fol_Stat_V[1] - X[7])*  (Fol_Stat_V[1] - X[7]));
+		Fol_Velocity *= 5.0;
+		
+		
+		Fol_DStatV[0] = Fol_Velocity * (X[6] - Fol_Stat_V[0]);
+		Fol_DStatV[1] = Fol_Velocity * (X[7] - Fol_Stat_V[1]);
+		Fol_DStatV[2] = Fol_Velocity * (X[4] - Fol_Stat_V[2]);
+		//Fol_DStatV[2] = 0.0;
+		//Fol_Stat_V[2] = atan((X[7] - Fol_Stat_V[1]) / (X[6] - Fol_Stat_V[0]));
+		//while (1){
+		//	if ((X[6] - Fol_Stat_V[0]) < 0 && (Fol_Stat_V[2] < (PI / 2.0) || Fol_Stat_V[2] > (PI * 3.0 / 2.0))){
+		//		Fol_Stat_V[2] += PI / 2.0; //checks if yaw show be in the LHP.
+		//	}
+		//	else if ((X[7] - Fol_Stat_V[1]) > 0 && (Fol_Stat_V[2] < 0.0 || Fol_Stat_V[2] > PI)){
+		//		Fol_Stat_V[2] += PI / 2.0; //checks if yaw show be in the LHP.
+		//	}
+		//	else{
+		//		break;
+		//	}
+		//}
 	}
 }
+
 
 void Hovercraft::eulers(){
 	// All of the following equations are either from the hovercraft.pdf
