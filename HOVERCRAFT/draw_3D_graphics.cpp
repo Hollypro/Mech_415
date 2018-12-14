@@ -146,6 +146,8 @@ Hovercraft::Hovercraft(double y[8], char *file_name) {
 	BStat_Var[3] = X[3];
 	BStat_Var[4] = 0;
 	BStat_Var[5] = 0;
+	BDStatV[0] = cos(BStat_Var[4]) * Velocity;
+	BDStatV[1] = sin(BStat_Var[4]) * Velocity;
 
 	Velocity = 10;
 
@@ -244,122 +246,124 @@ double Hovercraft::get_Bullxy(int index){
 }
 
 void Hovercraft::input(){
-	//auto Then = std::chrono::duration<double>(TimeThen.time_since_epoch());
-	//auto TimeNow = chrono::high_resolution_clock::now();					
-	//auto Now = std::chrono::duration<double>(TimeNow.time_since_epoch());	
+	{
+		//auto Then = std::chrono::duration<double>(TimeThen.time_since_epoch());
+		//auto TimeNow = chrono::high_resolution_clock::now();					
+		//auto Now = std::chrono::duration<double>(TimeNow.time_since_epoch());	
 
-	/*This whole section is to ensure enough time has passed since switching between third person
-	view and fps, to prevent me from puking while debugging.*/
+		/*This whole section is to ensure enough time has passed since switching between third person
+		view and fps, to prevent me from puking while debugging.*/
 
-	/*It turns out that VS 2013 is known for being unable to deal with time.
-	https://stackoverflow.com/questions/17769172/non-conforming-return-value-for-stdchronodurationoperator-in-microsoft
-	https://stackoverflow.com/questions/24586804/c11-chrono-in-visual-studio-2013
-	*/
-
-
-	//double TimeSince = Now.count() - Then.count();			
-
-	if (KEY(VK_UP) && !(Prev_Key)){
-		View = !View;
-		Prev_Key = true;
-		//auto TimeThen = chrono::high_resolution_clock::now();
-	}
-	else if (!(KEY(VK_UP))){ //So that holding the up key won't flash between the two views.
-		Prev_Key = false;
-	}
-
-	if (View){}
-	else{
-		// void set_view(double *eye_point, double *lookat_point, double *up_dir, double fov=3.14159/4);
-
-		double eye_point[4], lookat_point[4], up_dir[4]; // 3+1 because the prof's library starts at index 1.
+		/*It turns out that VS 2013 is known for being unable to deal with time.
+		https://stackoverflow.com/questions/17769172/non-conforming-return-value-for-stdchronodurationoperator-in-microsoft
+		https://stackoverflow.com/questions/24586804/c11-chrono-in-visual-studio-2013
+		*/
 
 
-		eye_point[1] = 0.0 + 1 * get_xy(6);  // x
-		eye_point[2] = 0.0 + 1 * get_xy(7); // y
-		eye_point[3] = -0.3; // z
+		//double TimeSince = Now.count() - Then.count();			
 
-
-
-		// the position you are looking at in global coord
-		lookat_point[1] = 0.0 + 1 * get_xy(6) + 2 * cos(get_xy(4)); // x
-		lookat_point[2] = 0.0 + 1 * get_xy(7) + 2 * sin(get_xy(4)); // y
-		lookat_point[3] = -1.0; // z
-
-		// the direction of the top of your head (note: up is a direction, not a point)
-		up_dir[1] = 0.0;//sin(get_xy(4)); // dx
-		up_dir[2] = 0.0;//cos(get_xy(4)); // dy 
-		up_dir[3] = 1.0;;//dz
-
-		set_view(eye_point, lookat_point, up_dir); // fpv when up is pressed.
-	}
-
-	//click down arrow key to reset position *** Change it if you can 
-	if (KEY(VK_DOWN)) {
-		for (int i = 0; i < 8; i++) {
-			X[i] = { 0.0 };
+		if (KEY(VK_UP) && !(Prev_Key)){
+			View = !View;
+			Prev_Key = true;
+			//auto TimeThen = chrono::high_resolution_clock::now();
 		}
+		else if (!(KEY(VK_UP))){ //So that holding the up key won't flash between the two views.
+			Prev_Key = false;
+		}
+
+		if (View){}
+		else{
+			// void set_view(double *eye_point, double *lookat_point, double *up_dir, double fov=3.14159/4);
+
+			double eye_point[4], lookat_point[4], up_dir[4]; // 3+1 because the prof's library starts at index 1.
+
+
+			eye_point[1] = 0.0 + 1 * get_xy(6);  // x
+			eye_point[2] = 0.0 + 1 * get_xy(7); // y
+			eye_point[3] = -0.3; // z
+
+
+
+			// the position you are looking at in global coord
+			lookat_point[1] = 0.0 + 1 * get_xy(6) + 2 * cos(get_xy(4)); // x
+			lookat_point[2] = 0.0 + 1 * get_xy(7) + 2 * sin(get_xy(4)); // y
+			lookat_point[3] = -1.0; // z
+
+			// the direction of the top of your head (note: up is a direction, not a point)
+			up_dir[1] = 0.0;//sin(get_xy(4)); // dx
+			up_dir[2] = 0.0;//cos(get_xy(4)); // dy 
+			up_dir[3] = 1.0;;//dz
+
+			set_view(eye_point, lookat_point, up_dir); // fpv when up is pressed.
+		}
+
+		//click down arrow key to reset position *** Change it if you can 
+		if (KEY(VK_DOWN)) {
+			for (int i = 0; i < 8; i++) {
+				X[i] = { 0.0 };
+			}
+		}
+
+		// Fr goes to 1 so eulers function works
+		if (KEY(VK_RIGHT)){
+			U[0] = 1.0;
+		}
+		else if (KEY(0x0058)){ // Press X to have the motor work in reverse
+			U[0] = -1.0;
+		}
+		else{
+			U[0] = 0.0;
+		}
+
+
+
+
+		// Fl goes to 1
+		if (KEY(VK_LEFT)){
+			U[1] = 1.0;
+		}
+		else if (KEY(0x005A)){ // Press Z to have the motor work in reverse
+			U[1] = -1.0;
+		}
+		else{
+			U[1] = 0.0;
+		}
+
+		if (KEY(VK_SPACE)){
+
+			Velocity = 10 + sqrt(X[1] * X[1] + X[3] * X[3]);
+			//Hovercraft State Variable
+			//index# : 0  1 2  3 4   5 6  7
+			//StateV : xb u yb v yaw r xc yc
+
+			//Bullet State variables
+			// index 0 1 2 3     4   5
+			// Var:  x y z pitch yaw roll
+			BStat_Var[0] = X[6];
+			BStat_Var[1] = X[7];
+			BStat_Var[2] = 0;
+			BStat_Var[3] = X[3];
+			BStat_Var[4] = X[4];
+			BStat_Var[5] = 0;
+			BDStatV[0] = cos(BStat_Var[4]) * Velocity;
+			BDStatV[1] = sin(BStat_Var[4]) * Velocity;
+		}
+
+
+		double dist = sqrt((BStat_Var[0] - Tar_Pos[0]) * (BStat_Var[0] - Tar_Pos[0]) + (BStat_Var[1] - Tar_Pos[1])*  (BStat_Var[1] - Tar_Pos[1]));
+
+		if (dist < 0.5){
+			srand(time(NULL));
+			Tar_Pos[0] = rand() % 80 - 40;
+			srand(time(NULL));
+			Tar_Pos[1] = rand() % 30 - 15;
+		}
+
+		Fol_Velocity = sqrt((Fol_Stat_V[0] - X[6]) * (Fol_Stat_V[0] - X[6]) + (Fol_Stat_V[1] - X[7])*  (Fol_Stat_V[1] - X[7])) * 10.0;
+		BDStatV[0] = Fol_Velocity * (Fol_Stat_V[0] - X[6]);
+		BDStatV[1] = Fol_Velocity * (Fol_Stat_V[1] - X[7]);
+		BDStatV[2] = Fol_Velocity * (Fol_Stat_V[2] - X[4]);
 	}
-
-	// Fr goes to 1 so eulers function works
-	if (KEY(VK_RIGHT)){
-		U[0] = 1.0;
-	}
-	else if (KEY(0x0058)){ // Press X to have the motor work in reverse
-		U[0] = -1.0;
-	}
-	else{
-		U[0] = 0.0;
-	}
-
-
-
-
-	// Fl goes to 1
-	if (KEY(VK_LEFT)){
-		U[1] = 1.0;
-	}
-	else if (KEY(0x005A)){ // Press Z to have the motor work in reverse
-		U[1] = -1.0;
-	}
-	else{
-		U[1] = 0.0;
-	}
-
-	if (KEY(VK_SPACE)){
-
-		Velocity = 10 + sqrt(X[1] * X[1] + X[3] * X[3]);
-		//Hovercraft State Variable
-		//index# : 0  1 2  3 4   5 6  7
-		//StateV : xb u yb v yaw r xc yc
-
-		//Bullet State variables
-		// index 0 1 2 3     4   5
-		// Var:  x y z pitch yaw roll
-		BStat_Var[0] = X[6];
-		BStat_Var[1] = X[7];
-		BStat_Var[2] = 0;
-		BStat_Var[3] = X[3];
-		BStat_Var[4] = X[4];
-		BStat_Var[5] = 0;
-		BDStatV[0] = cos(BStat_Var[4]) * Velocity;
-		BDStatV[1] = sin(BStat_Var[4]) * Velocity;
-	}
-
-
-	double dist = sqrt((BStat_Var[0] - Tar_Pos[0]) * (BStat_Var[0] - Tar_Pos[0]) + (BStat_Var[1] - Tar_Pos[1])*  (BStat_Var[1] - Tar_Pos[1]));
-
-	if (dist < 0.5){
-		srand(time(NULL));
-		Tar_Pos[0] = rand() % 80 - 40;
-		srand(time(NULL));
-		Tar_Pos[1] = rand() % 30 - 15;
-	}
-
-	Fol_Velocity = sqrt((Fol_Stat_V[0] - X[6]) * (Fol_Stat_V[0] - X[6]) + (Fol_Stat_V[1] - X[7])*  (Fol_Stat_V[1] - X[7])) * 10.0;
-	BDStatV[0] = Fol_Velocity * (Fol_Stat_V[0] - X[6]);
-	BDStatV[1] = Fol_Velocity * (Fol_Stat_V[1] - X[7]);
-	BDStatV[2] = Fol_Velocity * (Fol_Stat_V[2] - X[4]);
 }
 
 
