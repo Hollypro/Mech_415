@@ -159,7 +159,7 @@ Hovercraft::Hovercraft(double y[8], char *file_name) {
 	BDStatV[5] = 0;
 
 	Fol_Stat_V[0] = 0.0;
-	Fol_Stat_V[1] = -0.5;
+	Fol_Stat_V[1] = 0.0;
 	Fol_Stat_V[2] = 0.0;
 
 	Fol_DStatV[0] = 0.0;
@@ -200,12 +200,12 @@ void Hovercraft::draw(){ //draw the hover craft
 	p_env->Scale = 0.05;
 	p_bull->Scale = 0.005;
 	p_tar->Scale = 0.25;
-	p_fol->Scale = 0.3 * 0.5;
+	p_fol->Scale = 0.3 * 0.9;
 	p_env->draw(0.0, 0.0, 1.5, 0.0, 0.0, 0.0);
 
 	// void draw(double Tx, double Ty, double Tz, double yaw, double pitch, double roll);
 	p_mesh->draw(X[6], X[7], 0.0, X[4] + PI, 0.0, PI / 2);
-	p_fol->draw(Fol_Stat_V[0], Fol_Stat_V[1], 0.0, Fol_Stat_V[2] + PI, 0.0, PI / 2);
+	p_fol->draw(Fol_Stat_V[0], Fol_Stat_V[1], -0.5, Fol_Stat_V[2] + PI, 0.0, PI / 2);
 	if (View){
 		p_bull->draw(BStat_Var[0], BStat_Var[1], 0.0, BStat_Var[4] + PI / 2, 0.0, PI);
 		// void draw(double Tx, double Ty, double Tz, double yaw, double pitch, double roll);
@@ -302,6 +302,9 @@ void Hovercraft::input(){
 			for (int i = 0; i < 8; i++) {
 				X[i] = { 0.0 };
 			}
+			for (int i = 0; i < 3; i++) {
+				Fol_Stat_V[i] = { 0.0 };
+			}
 		}
 
 		// Fr goes to 1 so eulers function works
@@ -359,10 +362,26 @@ void Hovercraft::input(){
 			Tar_Pos[1] = rand() % 30 - 15;
 		}
 
-		Fol_Velocity = sqrt((Fol_Stat_V[0] - X[6]) * (Fol_Stat_V[0] - X[6]) + (Fol_Stat_V[1] - X[7])*  (Fol_Stat_V[1] - X[7])) * 10.0;
-		BDStatV[0] = Fol_Velocity * (Fol_Stat_V[0] - X[6]);
-		BDStatV[1] = Fol_Velocity * (Fol_Stat_V[1] - X[7]);
-		BDStatV[2] = Fol_Velocity * (Fol_Stat_V[2] - X[4]);
+		Fol_Velocity = sqrt((Fol_Stat_V[0] - X[6]) * (Fol_Stat_V[0] - X[6]) + (Fol_Stat_V[1] - X[7])*  (Fol_Stat_V[1] - X[7]));
+		Fol_Velocity *= 5.0;
+		
+		
+		Fol_DStatV[0] = Fol_Velocity * (X[6] - Fol_Stat_V[0]);
+		Fol_DStatV[1] = Fol_Velocity * (X[7] - Fol_Stat_V[1]);
+		Fol_DStatV[2] = Fol_Velocity * (X[4] - Fol_Stat_V[2]);
+		//Fol_DStatV[2] = 0.0;
+		//Fol_Stat_V[2] = atan((X[7] - Fol_Stat_V[1]) / (X[6] - Fol_Stat_V[0]));
+		//while (1){
+		//	if ((X[6] - Fol_Stat_V[0]) < 0 && (Fol_Stat_V[2] < (PI / 2.0) || Fol_Stat_V[2] > (PI * 3.0 / 2.0))){
+		//		Fol_Stat_V[2] += PI / 2.0; //checks if yaw show be in the LHP.
+		//	}
+		//	else if ((X[7] - Fol_Stat_V[1]) > 0 && (Fol_Stat_V[2] < 0.0 || Fol_Stat_V[2] > PI)){
+		//		Fol_Stat_V[2] += PI / 2.0; //checks if yaw show be in the LHP.
+		//	}
+		//	else{
+		//		break;
+		//	}
+		//}
 	}
 }
 
