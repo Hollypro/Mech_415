@@ -12,11 +12,13 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="draw_3D_graphics.cpp" />
-    <ClCompile Include="rotation.cpp" />
-    <ClCompile Include="timer.cpp" />
+    <ClCompile Include="HoverCraft.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="Vertices.lib" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="HoverCraft.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{3A68081D-E8F9-4523-9436-530DE9E5530B}</ProjectGuid>
